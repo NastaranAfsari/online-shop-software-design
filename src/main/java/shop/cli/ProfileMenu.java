@@ -2,7 +2,7 @@ package shop.cli;
 
 import shop.model.Address;
 import shop.model.User;
-import shop.service.AuthService;
+import shop.service.ProfileService;
 import shop.service.UserSession;
 
 import java.util.List;
@@ -11,13 +11,13 @@ import java.util.List;
 public class ProfileMenu {
     private final ConsoleIO io;
     private final ConsolePrinter printer;
-    private final AuthService authService;
+    private final ProfileService profileService;
     private final UserSession session;
 
-    public ProfileMenu(ConsoleIO io, ConsolePrinter printer, AuthService authService, UserSession session) {
+    public ProfileMenu(ConsoleIO io, ConsolePrinter printer, ProfileService profileService, UserSession session) {
         this.io = io;
         this.printer = printer;
-        this.authService = authService;
+        this.profileService = profileService;
         this.session = session;
     }
 
@@ -50,13 +50,13 @@ public class ProfileMenu {
         String name = io.readLine("New full name [" + user.getFullName() + "]: ");
         String email = io.readLine("New email [" + (user.getEmail() == null ? "" : user.getEmail()) + "]: ");
         String phone = io.readLine("New phone [" + (user.getPhone() == null ? "" : user.getPhone()) + "]: ");
-        authService.updateProfile(name, email, phone);
+        profileService.updateProfile(name, email, phone);
         io.println("Profile updated successfully!");
     }
 
     public void addAddress() {
         io.println("\n=== Add New Address ===");
-        authService.addAddress(readAddress(null));
+        profileService.addAddress(readAddress(null));
         io.println("Address added successfully!");
     }
 
@@ -66,14 +66,14 @@ public class ProfileMenu {
             return;
         }
         io.println("Enter the new details (all fields required).");
-        authService.updateAddress(old.getTitle(), readAddress(old.getTitle()));
+        profileService.updateAddress(old.getTitle(), readAddress(old.getTitle()));
         io.println("Address updated successfully.");
     }
 
     private void deleteAddress() {
         Address address = chooseAddress("Select the address to delete");
         if (address != null) {
-            authService.removeAddress(address.getTitle());
+            profileService.removeAddress(address.getTitle());
             io.println("Address removed successfully.");
         }
     }
@@ -81,13 +81,13 @@ public class ProfileMenu {
     private void setDefaultAddress() {
         Address address = chooseAddress("Select the new default address");
         if (address != null) {
-            authService.setDefaultAddress(address.getTitle());
+            profileService.setDefaultAddress(address.getTitle());
             io.println("Default address updated.");
         }
     }
 
     private Address chooseAddress(String prompt) {
-        List<Address> addresses = authService.getAddresses();
+        List<Address> addresses = profileService.getAddresses();
         if (addresses.isEmpty()) {
             io.println("You have no addresses.");
             return null;

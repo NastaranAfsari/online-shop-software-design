@@ -1,6 +1,5 @@
 package shop.service;
 
-import shop.model.Address;
 import shop.model.PasswordResetToken;
 import shop.model.Role;
 import shop.model.User;
@@ -10,17 +9,17 @@ import shop.repository.UserRepository;
 import java.security.SecureRandom;
 import java.time.LocalDateTime;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
-/** Registration, login/logout, profile, address book and password recovery (stories 1-7). */
+/** Registration, login/logout and password recovery (stories 1-4). */
 public class AuthService {
     private static final int RESET_CODE_MINUTES = 10;
 
     private final UserRepository userRepository;
     private final PasswordHasher passwordHasher;
     private final UserSession session;
+    private final UniqueContactPolicy uniqueContactPolicy;
     private final Map<String, PasswordResetToken> resetTokens = new HashMap<>();
     private final SecureRandom random = new SecureRandom();
 
@@ -28,6 +27,7 @@ public class AuthService {
         this.userRepository = userRepository;
         this.passwordHasher = passwordHasher;
         this.session = session;
+        this.uniqueContactPolicy = new UniqueContactPolicy(userRepository);
     }
 
     // ---------- registration ----------
@@ -62,17 +62,8 @@ public class AuthService {
                     "Password must be at least " + Validators.MIN_PASSWORD_LENGTH + " characters long.");
         }
         User user = new User(fullName, normalizedEmail, normalizedPhone, passwordHasher.hash(password), role);
-        requireUnique(user.getEmail(), user.getPhone(), null);
+        uniqueContactPolicy.requireUnique(user.getEmail(), user.getPhone(), null);
         return userRepository.save(user);
-    }
-
-    private void requireUnique(String email, String phone, User self) {
-        if (email != null && userRepository.findByEmail(email).filter(u -> u != self).isPresent()) {
-            throw new IllegalArgumentException("A user with this email has already registered.");
-        }
-        if (phone != null && userRepository.findByPhone(phone).filter(u -> u != self).isPresent()) {
-            throw new IllegalArgumentException("A user with this phone number has already registered.");
-        }
     }
 
     // ---------- session ----------
@@ -96,50 +87,6 @@ public class AuthService {
     private Optional<User> findByIdentifier(String identifier) {
         String trimmed = identifier.trim();
         return trimmed.contains("@") ? userRepository.findByEmail(trimmed) : userRepository.findByPhone(trimmed);
-    }
-
-    // ---------- profile ----------
-
-    /** Blank arguments keep the current value. */
-    public User updateProfile(String newFullName, String newEmail, String newPhone) {
-        User user = Authorization.requireLoggedIn(session.getCurrentUser());
-        String name = Validators.isBlank(newFullName) ? user.getFullName() : newFullName;
-        String email = Validators.isBlank(newEmail) ? user.getEmail() : newEmail;
-        String phone = Validators.isBlank(newPhone) ? user.getPhone() : newPhone;
-        // Uniqueness is checked BEFORE the entity is changed, so a rejected update leaves it untouched.
-        requireUnique(Validators.normalizeEmail(email), Validators.normalizePhone(phone), user);
-        user.updateProfile(name, email, phone);
-        return userRepository.save(user);
-    }
-
-    // ---------- addresses ----------
-
-    public void addAddress(Address address) {
-        User user = Authorization.requireLoggedIn(session.getCurrentUser());
-        user.addAddress(address);
-        userRepository.save(user);
-    }
-
-    public void updateAddress(String oldTitle, Address updatedAddress) {
-        User user = Authorization.requireLoggedIn(session.getCurrentUser());
-        user.updateAddress(oldTitle, updatedAddress);
-        userRepository.save(user);
-    }
-
-    public void removeAddress(String title) {
-        User user = Authorization.requireLoggedIn(session.getCurrentUser());
-        user.removeAddress(title);
-        userRepository.save(user);
-    }
-
-    public void setDefaultAddress(String title) {
-        User user = Authorization.requireLoggedIn(session.getCurrentUser());
-        user.setDefaultAddress(title);
-        userRepository.save(user);
-    }
-
-    public List<Address> getAddresses() {
-        return Authorization.requireLoggedIn(session.getCurrentUser()).getAddresses();
     }
 
     // ---------- password recovery (simulated delivery of the code) ----------

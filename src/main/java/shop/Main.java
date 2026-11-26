@@ -21,6 +21,7 @@ import shop.service.InventoryService;
 import shop.service.OrderService;
 import shop.service.PasswordHasher;
 import shop.service.PaymentService;
+import shop.service.ProfileService;
 import shop.service.ProductService;
 import shop.service.ReviewService;
 import shop.service.SimulatedPaymentGateway;
@@ -41,6 +42,7 @@ public class Main {
         SimulatedPaymentGateway gateway = new SimulatedPaymentGateway();
         UserSession session = new UserSession();
         AuthService authService = new AuthService(userRepository, new PasswordHasher(), session);
+        ProfileService profileService = new ProfileService(userRepository, session);
         ProductService productService = new ProductService(productRepository, categoryRepository);
         InventoryService inventoryService = new InventoryService(productRepository);
         CartService cartService = new CartService(productService);
@@ -55,7 +57,7 @@ public class Main {
         ConsolePrinter printer = new ConsolePrinter(io);
         ConsoleApp app = new ConsoleApp(io, session,
                 new AuthMenu(io, authService),
-                new ProfileMenu(io, printer, authService, session),
+                new ProfileMenu(io, printer, profileService, session),
                 new ProductMenu(io, printer, productService, reviewService, session),
                 new CartMenu(io, printer, cartService, session),
                 new OrderMenu(io, printer, session, cartService, orderService, paymentService, gateway),
