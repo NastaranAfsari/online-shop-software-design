@@ -20,13 +20,14 @@ public class AuthService {
 
     private final UserRepository userRepository;
     private final PasswordHasher passwordHasher;
+    private final UserSession session;
     private final Map<String, PasswordResetToken> resetTokens = new HashMap<>();
     private final SecureRandom random = new SecureRandom();
-    private User currentUser;
 
-    public AuthService(UserRepository userRepository, PasswordHasher passwordHasher) {
+    public AuthService(UserRepository userRepository, PasswordHasher passwordHasher, UserSession session) {
         this.userRepository = userRepository;
         this.passwordHasher = passwordHasher;
+        this.session = session;
     }
 
     // ---------- registration ----------
@@ -84,24 +85,12 @@ public class AuthService {
         User user = findByIdentifier(identifier)
                 .filter(u -> passwordHasher.matches(password, u.getPasswordHash()))
                 .orElseThrow(() -> new IllegalArgumentException("Incorrect email/phone or password."));
-        this.currentUser = user;
+        session.start(user);
         return user;
     }
 
     public void logout() {
-        this.currentUser = null;
-    }
-
-    public User getCurrentUser() {
-        return currentUser;
-    }
-
-    public boolean isLoggedIn() {
-        return currentUser != null;
-    }
-
-    public boolean isAdmin() {
-        return currentUser != null && currentUser.isAdmin();
+        session.end();
     }
 
     private Optional<User> findByIdentifier(String identifier) {
@@ -113,7 +102,7 @@ public class AuthService {
 
     /** Blank arguments keep the current value. */
     public User updateProfile(String newFullName, String newEmail, String newPhone) {
-        User user = Authorization.requireLoggedIn(currentUser);
+        User user = Authorization.requireLoggedIn(session.getCurrentUser());
         String name = Validators.isBlank(newFullName) ? user.getFullName() : newFullName;
         String email = Validators.isBlank(newEmail) ? user.getEmail() : newEmail;
         String phone = Validators.isBlank(newPhone) ? user.getPhone() : newPhone;
@@ -126,31 +115,31 @@ public class AuthService {
     // ---------- addresses ----------
 
     public void addAddress(Address address) {
-        User user = Authorization.requireLoggedIn(currentUser);
+        User user = Authorization.requireLoggedIn(session.getCurrentUser());
         user.addAddress(address);
         userRepository.save(user);
     }
 
     public void updateAddress(String oldTitle, Address updatedAddress) {
-        User user = Authorization.requireLoggedIn(currentUser);
+        User user = Authorization.requireLoggedIn(session.getCurrentUser());
         user.updateAddress(oldTitle, updatedAddress);
         userRepository.save(user);
     }
 
     public void removeAddress(String title) {
-        User user = Authorization.requireLoggedIn(currentUser);
+        User user = Authorization.requireLoggedIn(session.getCurrentUser());
         user.removeAddress(title);
         userRepository.save(user);
     }
 
     public void setDefaultAddress(String title) {
-        User user = Authorization.requireLoggedIn(currentUser);
+        User user = Authorization.requireLoggedIn(session.getCurrentUser());
         user.setDefaultAddress(title);
         userRepository.save(user);
     }
 
     public List<Address> getAddresses() {
-        return Authorization.requireLoggedIn(currentUser).getAddresses();
+        return Authorization.requireLoggedIn(session.getCurrentUser()).getAddresses();
     }
 
     // ---------- password recovery (simulated delivery of the code) ----------

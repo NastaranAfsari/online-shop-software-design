@@ -1,14 +1,14 @@
 package shop.cli;
 
 import shop.model.User;
-import shop.service.AuthService;
+import shop.service.UserSession;
 
 import java.util.NoSuchElementException;
 
 /** Entry point of the presentation layer: shows the right menu for guest, customer or admin. */
 public class ConsoleApp {
     private final ConsoleIO io;
-    private final AuthService authService;
+    private final UserSession session;
     private final AuthMenu authMenu;
     private final ProfileMenu profileMenu;
     private final ProductMenu productMenu;
@@ -17,10 +17,10 @@ public class ConsoleApp {
     private final AdminMenu adminMenu;
     private boolean running = true;
 
-    public ConsoleApp(ConsoleIO io, AuthService authService, AuthMenu authMenu, ProfileMenu profileMenu,
+    public ConsoleApp(ConsoleIO io, UserSession session, AuthMenu authMenu, ProfileMenu profileMenu,
                       ProductMenu productMenu, CartMenu cartMenu, OrderMenu orderMenu, AdminMenu adminMenu) {
         this.io = io;
-        this.authService = authService;
+        this.session = session;
         this.authMenu = authMenu;
         this.profileMenu = profileMenu;
         this.productMenu = productMenu;
@@ -32,9 +32,9 @@ public class ConsoleApp {
     public void start() {
         try {
             while (running) {
-                if (!authService.isLoggedIn()) {
+                if (!session.isLoggedIn()) {
                     showGuestMenu();
-                } else if (authService.isAdmin()) {
+                } else if (session.isAdmin()) {
                     showAdminMenu();
                 } else {
                     showCustomerMenu();
@@ -75,7 +75,7 @@ public class ConsoleApp {
     }
 
     private void showCustomerMenu() {
-        User user = authService.getCurrentUser();
+        User user = session.getCurrentUser();
         io.println("\n=== Customer Menu (" + user.getFullName() + ") ===");
         io.println("1. Browse products");
         io.println("2. Search products");
@@ -124,7 +124,7 @@ public class ConsoleApp {
     }
 
     private void showAdminMenu() {
-        User user = authService.getCurrentUser();
+        User user = session.getCurrentUser();
         io.println("\n=== Admin Panel (" + user.getFullName() + ") ===");
         io.println("1. Add category");
         io.println("2. Enable/disable category");

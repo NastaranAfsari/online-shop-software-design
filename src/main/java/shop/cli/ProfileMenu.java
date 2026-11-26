@@ -3,6 +3,7 @@ package shop.cli;
 import shop.model.Address;
 import shop.model.User;
 import shop.service.AuthService;
+import shop.service.UserSession;
 
 import java.util.List;
 
@@ -11,15 +12,17 @@ public class ProfileMenu {
     private final ConsoleIO io;
     private final ConsolePrinter printer;
     private final AuthService authService;
+    private final UserSession session;
 
-    public ProfileMenu(ConsoleIO io, ConsolePrinter printer, AuthService authService) {
+    public ProfileMenu(ConsoleIO io, ConsolePrinter printer, AuthService authService, UserSession session) {
         this.io = io;
         this.printer = printer;
         this.authService = authService;
+        this.session = session;
     }
 
     public void viewProfile() {
-        printer.printProfile(authService.getCurrentUser());
+        printer.printProfile(session.getCurrentUser());
     }
 
     public void manage() {
@@ -42,7 +45,7 @@ public class ProfileMenu {
     }
 
     private void editPersonalInfo() {
-        User user = authService.getCurrentUser();
+        User user = session.getCurrentUser();
         io.println("(Leave empty to keep the current value)");
         String name = io.readLine("New full name [" + user.getFullName() + "]: ");
         String email = io.readLine("New email [" + (user.getEmail() == null ? "" : user.getEmail()) + "]: ");

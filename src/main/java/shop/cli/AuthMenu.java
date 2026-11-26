@@ -1,5 +1,6 @@
 package shop.cli;
 
+import shop.model.User;
 import shop.service.AuthService;
 
 /** Login, registration and password recovery screens. */
@@ -15,8 +16,8 @@ public class AuthMenu {
     public void login() {
         String identifier = io.readLine("Email or phone: ");
         String password = io.readLine("Password: ");
-        authService.login(identifier, password);
-        io.println("Welcome back, " + authService.getCurrentUser().getFullName() + "!");
+        User user = authService.login(identifier, password);
+        io.println("Welcome back, " + user.getFullName() + "!");
     }
 
     public void register() {

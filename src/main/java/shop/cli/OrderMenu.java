@@ -5,11 +5,11 @@ import shop.model.Order;
 import shop.model.Payment;
 import shop.model.PaymentMethod;
 import shop.model.User;
-import shop.service.AuthService;
 import shop.service.CartService;
 import shop.service.OrderService;
 import shop.service.PaymentService;
 import shop.service.SimulatedPaymentGateway;
+import shop.service.UserSession;
 
 import java.util.List;
 
@@ -17,17 +17,17 @@ import java.util.List;
 public class OrderMenu {
     private final ConsoleIO io;
     private final ConsolePrinter printer;
-    private final AuthService authService;
+    private final UserSession session;
     private final CartService cartService;
     private final OrderService orderService;
     private final PaymentService paymentService;
     private final SimulatedPaymentGateway gateway;
 
-    public OrderMenu(ConsoleIO io, ConsolePrinter printer, AuthService authService, CartService cartService,
+    public OrderMenu(ConsoleIO io, ConsolePrinter printer, UserSession session, CartService cartService,
                      OrderService orderService, PaymentService paymentService, SimulatedPaymentGateway gateway) {
         this.io = io;
         this.printer = printer;
-        this.authService = authService;
+        this.session = session;
         this.cartService = cartService;
         this.orderService = orderService;
         this.paymentService = paymentService;
@@ -35,7 +35,7 @@ public class OrderMenu {
     }
 
     public void checkout() {
-        User user = authService.getCurrentUser();
+        User user = session.getCurrentUser();
         printer.printCart(cartService.getCart(user));
         if (user.getCart().isEmpty()) {
             return;
@@ -67,7 +67,7 @@ public class OrderMenu {
     }
 
     private void processPayment(String orderId) {
-        User user = authService.getCurrentUser();
+        User user = session.getCurrentUser();
         Order order = orderService.getOrderDetails(user, orderId);
         if (!order.isPayable()) {
             throw new IllegalStateException(order.getStatus().isPaidState()
@@ -95,7 +95,7 @@ public class OrderMenu {
     }
 
     public void viewOrders() {
-        List<Order> orders = orderService.getUserOrders(authService.getCurrentUser());
+        List<Order> orders = orderService.getUserOrders(session.getCurrentUser());
         if (orders.isEmpty()) {
             io.println("No orders found.");
             return;
@@ -105,13 +105,13 @@ public class OrderMenu {
 
     public void viewOrderDetails() {
         String orderId = io.readLine("Enter Order ID: ");
-        printer.printOrderDetails(orderService.getOrderDetails(authService.getCurrentUser(), orderId), false);
+        printer.printOrderDetails(orderService.getOrderDetails(session.getCurrentUser(), orderId), false);
     }
 
     public void cancelPending() {
         String orderId = io.readLine("Enter Order ID to cancel: ");
         if (io.confirm("Cancel this order?")) {
-            orderService.cancelOrder(authService.getCurrentUser(), orderId);
+            orderService.cancelOrder(session.getCurrentUser(), orderId);
             io.println("Order canceled.");
         }
     }

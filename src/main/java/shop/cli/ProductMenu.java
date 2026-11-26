@@ -4,9 +4,9 @@ import shop.model.Category;
 import shop.model.Product;
 import shop.model.ProductFilter;
 import shop.model.ProductSortOption;
-import shop.service.AuthService;
 import shop.service.ProductService;
 import shop.service.ReviewService;
+import shop.service.UserSession;
 
 import java.math.BigDecimal;
 import java.util.List;
@@ -17,15 +17,15 @@ public class ProductMenu {
     private final ConsolePrinter printer;
     private final ProductService productService;
     private final ReviewService reviewService;
-    private final AuthService authService;
+    private final UserSession session;
 
     public ProductMenu(ConsoleIO io, ConsolePrinter printer, ProductService productService,
-                       ReviewService reviewService, AuthService authService) {
+                       ReviewService reviewService, UserSession session) {
         this.io = io;
         this.printer = printer;
         this.productService = productService;
         this.reviewService = reviewService;
-        this.authService = authService;
+        this.session = session;
     }
 
     public void browse() {
@@ -122,14 +122,14 @@ public class ProductMenu {
     public void rate() {
         String productId = io.readLine("Enter Product ID: ");
         int score = io.readInt("Your rating (1 to 5): ");
-        reviewService.rateProduct(authService.getCurrentUser(), productId, score);
+        reviewService.rateProduct(session.getCurrentUser(), productId, score);
         io.println("Rating saved.");
     }
 
     public void comment() {
         String productId = io.readLine("Enter Product ID: ");
         String text = io.readLine("Your comment: ");
-        reviewService.commentOnProduct(authService.getCurrentUser(), productId, text);
+        reviewService.commentOnProduct(session.getCurrentUser(), productId, text);
         io.println("Comment saved.");
     }
 
