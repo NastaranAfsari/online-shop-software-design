@@ -1,0 +1,31 @@
+digraph DeploymentDiagram {
+  graph [rankdir=LR, fontname="DejaVu Sans", nodesep=0.5, ranksep=0.8, pad=0.3, compound=true,
+         label="Deployment diagram: OnlineShop runs as one console application on the user's computer", labelloc=t, fontsize=12];
+  node [fontname="DejaVu Sans", fontsize=10];
+  edge [fontname="DejaVu Sans", fontsize=9, color="#333333"];
+
+  subgraph cluster_pc {
+    label="«device»\nUser's computer (Windows / Linux / macOS)"; style="filled"; fillcolor="#F5F5F5"; color="#555555"; fontsize=11;
+
+    subgraph cluster_console {
+      label="«execution environment»\nConsole\n(IntelliJ IDEA Run window or a terminal)"; style="filled"; fillcolor="#FFFFFF"; color="#777777"; fontsize=10;
+      con [shape=box, style="rounded", label="keyboard input / text output\n(System.in / System.out)"];
+    }
+
+    subgraph cluster_jvm {
+      label="«execution environment»\nJava Virtual Machine (JDK 17 or newer)"; style="filled"; fillcolor="#FFFFFF"; color="#777777"; fontsize=10;
+      art [shape=note, style=filled, fillcolor="#FFF8E1", label="«artifact»\nOnlineShop compiled classes\n(out/, entry point: shop.Main)"];
+      comps [shape=box, style="rounded,dashed", label="«manifest»\nshop.cli  ·  shop.service  ·  shop.repository  ·  shop.model\nin-memory data (lost on exit)\nsimulated payment gateway (in-process)"];
+      art -> comps [style=dashed, arrowhead=vee, label=" «manifest» "];
+    }
+
+    src [shape=note, style=filled, fillcolor="#E3F2FD", label="«artifact»\nsource code\n(src/main/java)"];
+    tool [shape=box3d, label="«execution environment»\nBuild tool\nIntelliJ IDEA  or  run.sh (javac)"];
+  }
+
+  src -> tool [style=dashed, arrowhead=vee, label=" compiled by "];
+  tool -> art [style=dashed, arrowhead=vee, label=" produces / runs (java -cp out shop.Main) "];
+  con -> comps [dir=both, arrowhead=vee, arrowtail=vee, label=" stdin / stdout ", lhead=cluster_jvm, ltail=cluster_console];
+
+  note [shape=note, fontsize=9, style=filled, fillcolor="#FFFDE7", label="No database server, web server or network connection is used.\lAll data is kept in memory; the payment gateway is simulated.\l"];
+}

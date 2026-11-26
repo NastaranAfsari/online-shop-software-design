@@ -1,0 +1,46 @@
+digraph ComponentDiagram {
+  graph [rankdir=TB, fontname="DejaVu Sans", nodesep=0.7, ranksep=0.45, pad=0.3, forcelabels=true,
+         label="Component diagram: OnlineShop (layered, single JVM process)", labelloc=t, fontsize=12];
+  node [fontname="DejaVu Sans", fontsize=10];
+  edge [fontname="DejaVu Sans", fontsize=9, color="#333333"];
+
+  main  [shape=component, style=filled, fillcolor="#F2F2F2", label="«component»\nComposition Root  (shop.Main)\ncreates and wires all objects"];
+  cli   [shape=component, style=filled, fillcolor="#E3F2FD", label="«component»\nPresentation  (shop.cli)\nConsoleApp, menus, ConsoleIO, ConsolePrinter"];
+  svc   [shape=component, style=filled, fillcolor="#E8F5E9", label="«component»\nBusiness Logic  (shop.service)\nAuth, Profile, PasswordRecovery, Product, Cart,\nOrder, Payment, Review, Inventory services,\nUserSession, payment verification rules"];
+  gw    [shape=component, style=filled, fillcolor="#FFF3E0", label="«component»\nPayment Gateway Simulator\n(SimulatedPaymentGateway)"];
+  repo  [shape=component, style=filled, fillcolor="#F3E5F5", label="«component»\nData Access  (shop.repository)\nInMemory*Repository"];
+  model [shape=component, style=filled, fillcolor="#FFFDE7", label="«component»\nDomain Model  (shop.model)\nUser, Product, Cart, Order, Payment, ..."];
+
+  iSvc [shape=plain, label=<<TABLE BORDER="0" CELLSPACING="0" CELLPADDING="1"><TR><TD PORT="c" FIXEDSIZE="TRUE" WIDTH="14" HEIGHT="14" BORDER="1" STYLE="ROUNDED" CELLPADDING="0"> </TD></TR><TR><TD><FONT POINT-SIZE="9">service operations</FONT></TD></TR></TABLE>>];
+  iSim [shape=plain, label=<<TABLE BORDER="0" CELLSPACING="0" CELLPADDING="1"><TR><TD PORT="c" FIXEDSIZE="TRUE" WIDTH="14" HEIGHT="14" BORDER="1" STYLE="ROUNDED" CELLPADDING="0"> </TD></TR><TR><TD><FONT POINT-SIZE="9">GatewaySimulationControl</FONT></TD></TR></TABLE>>];
+  iGw [shape=plain, label=<<TABLE BORDER="0" CELLSPACING="0" CELLPADDING="1"><TR><TD PORT="c" FIXEDSIZE="TRUE" WIDTH="14" HEIGHT="14" BORDER="1" STYLE="ROUNDED" CELLPADDING="0"> </TD></TR><TR><TD><FONT POINT-SIZE="9">PaymentGateway</FONT></TD></TR></TABLE>>];
+  iRepo [shape=plain, label=<<TABLE BORDER="0" CELLSPACING="0" CELLPADDING="1"><TR><TD PORT="c" FIXEDSIZE="TRUE" WIDTH="14" HEIGHT="14" BORDER="1" STYLE="ROUNDED" CELLPADDING="0"> </TD></TR><TR><TD><FONT POINT-SIZE="9">UserRepository, ProductRepository,<BR/>CategoryRepository, OrderRepository</FONT></TD></TR></TABLE>>];
+
+  main -> cli [style=dashed, arrowhead=vee, label=" «create» "];
+  // Presentation requires services and simulator control
+  cli -> iSvc:c [style=dashed, arrowhead=vee, label=" «require» "];
+  cli -> iSim:c [style=dashed, arrowhead=vee, label=" «require» "];
+  // provided interfaces (lollipop lines), drawn in layout direction
+  iSvc:c -> svc [arrowhead=none];
+  iSim:c -> gw  [arrowhead=none];
+  // Business logic requires repositories and the gateway port
+  svc -> iRepo:c [style=dashed, arrowhead=vee, label=" «require» "];
+  svc -> iGw:c  [style=dashed, arrowhead=vee, label=" «require» "];
+  gw  -> iGw:c  [arrowhead=none];
+  iRepo:c -> repo [arrowhead=none];
+  // domain model used by all layers
+  cli  -> model [style=dashed, arrowhead=vee, label=" «use» ", constraint=false];
+  svc  -> model [style=dashed, arrowhead=vee, label=" «use» "];
+  repo -> model [style=dashed, arrowhead=vee, label=" «use» ", constraint=false];
+  main -> svc  [style=dashed, arrowhead=vee, label=" «create» ", constraint=false];
+  main -> gw   [style=dashed, arrowhead=vee, label=" «create» ", constraint=false];
+  main -> repo [style=dashed, arrowhead=vee, label=" «create» ", constraint=false];
+
+  {rank=same; iSvc; iSim;}
+  {rank=same; svc; gw;}
+  {rank=same; iRepo; iGw;}
+  {rank=same; repo; model;}
+
+  note [shape=note, fontsize=9, style=filled, fillcolor="#FFFDE7", label="Each component is one Java package; the gateway simulator is a class in\lshop.service that implements the PaymentGateway port.\lInterfaces used only inside Business Logic (ProductLookup, PurchaseHistory,\lOrderStockHandler, PasswordHasher, PaymentVerificationRule) are not shown.\l"];
+  {rank=same; main; note;}
+}
