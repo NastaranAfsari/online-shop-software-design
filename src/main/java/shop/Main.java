@@ -17,19 +17,25 @@ import shop.repository.InMemoryProductRepository;
 import shop.repository.InMemoryUserRepository;
 import shop.service.AuthService;
 import shop.service.CartService;
+import shop.service.GatewayApprovalRule;
 import shop.service.InventoryService;
 import shop.service.OrderService;
+import shop.service.PaidAmountRule;
 import shop.service.PasswordHasher;
 import shop.service.PasswordRecoveryService;
 import shop.service.PaymentService;
+import shop.service.PaymentVerificationRule;
 import shop.service.Pbkdf2PasswordHasher;
 import shop.service.ProductService;
 import shop.service.ProfileService;
 import shop.service.ReviewService;
 import shop.service.SimulatedPaymentGateway;
+import shop.service.StockAvailabilityRule;
+import shop.service.TransactionReferenceRule;
 import shop.service.UserSession;
 
 import java.math.BigDecimal;
+import java.util.List;
 
 /** Composition root: creates every object, wires the dependencies and starts the CLI. */
 public class Main {
@@ -51,7 +57,9 @@ public class Main {
         InventoryService inventoryService = new InventoryService(productRepository);
         CartService cartService = new CartService(productService);
         OrderService orderService = new OrderService(orderRepository, cartService, inventoryService);
-        PaymentService paymentService = new PaymentService(orderRepository, productService, gateway, inventoryService);
+        List<PaymentVerificationRule> paymentRules = List.of(new GatewayApprovalRule(), new PaidAmountRule(),
+                new TransactionReferenceRule(), new StockAvailabilityRule(productService));
+        PaymentService paymentService = new PaymentService(orderRepository, gateway, paymentRules, inventoryService);
         ReviewService reviewService = new ReviewService(productService, orderService);
 
         seedData(authService, productService);
