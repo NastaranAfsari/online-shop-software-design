@@ -20,10 +20,13 @@ import shop.service.CartService;
 import shop.service.InventoryService;
 import shop.service.OrderService;
 import shop.service.PasswordHasher;
+import shop.service.PasswordRecoveryService;
 import shop.service.PaymentService;
+import shop.service.ProfileService;
 import shop.service.ProductService;
 import shop.service.ReviewService;
 import shop.service.SimulatedPaymentGateway;
+import shop.service.UserSession;
 
 import java.math.BigDecimal;
 
@@ -38,7 +41,11 @@ public class Main {
 
         // Services
         SimulatedPaymentGateway gateway = new SimulatedPaymentGateway();
-        AuthService authService = new AuthService(userRepository, new PasswordHasher());
+        UserSession session = new UserSession();
+        PasswordHasher passwordHasher = new PasswordHasher();
+        AuthService authService = new AuthService(userRepository, passwordHasher, session);
+        PasswordRecoveryService recoveryService = new PasswordRecoveryService(userRepository, passwordHasher);
+        ProfileService profileService = new ProfileService(userRepository, session);
         ProductService productService = new ProductService(productRepository, categoryRepository);
         InventoryService inventoryService = new InventoryService(productRepository);
         CartService cartService = new CartService(productService);
@@ -51,13 +58,13 @@ public class Main {
         // Presentation
         ConsoleIO io = new ConsoleIO();
         ConsolePrinter printer = new ConsolePrinter(io);
-        ConsoleApp app = new ConsoleApp(io, authService,
-                new AuthMenu(io, authService),
-                new ProfileMenu(io, printer, authService),
-                new ProductMenu(io, printer, productService, reviewService, authService),
-                new CartMenu(io, printer, cartService, authService),
-                new OrderMenu(io, printer, authService, cartService, orderService, paymentService, gateway),
-                new AdminMenu(io, printer, authService, productService, inventoryService, orderService));
+        ConsoleApp app = new ConsoleApp(io, session,
+                new AuthMenu(io, authService, recoveryService),
+                new ProfileMenu(io, printer, profileService, session),
+                new ProductMenu(io, printer, productService, reviewService, session),
+                new CartMenu(io, printer, cartService, session),
+                new OrderMenu(io, printer, session, cartService, orderService, paymentService, gateway),
+                new AdminMenu(io, printer, session, productService, inventoryService, orderService));
         System.out.println("Demo accounts -> admin: admin@shop.com / admin123 | customer: ali@shop.com / 123456");
         app.start();
     }

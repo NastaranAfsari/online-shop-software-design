@@ -6,10 +6,10 @@ import shop.model.OrderStatus;
 import shop.model.Product;
 import shop.model.StockMovement;
 import shop.model.User;
-import shop.service.AuthService;
 import shop.service.InventoryService;
 import shop.service.OrderService;
 import shop.service.ProductService;
+import shop.service.UserSession;
 
 import java.math.BigDecimal;
 import java.util.ArrayList;
@@ -19,23 +19,23 @@ import java.util.List;
 public class AdminMenu {
     private final ConsoleIO io;
     private final ConsolePrinter printer;
-    private final AuthService authService;
+    private final UserSession session;
     private final ProductService productService;
     private final InventoryService inventoryService;
     private final OrderService orderService;
 
-    public AdminMenu(ConsoleIO io, ConsolePrinter printer, AuthService authService, ProductService productService,
+    public AdminMenu(ConsoleIO io, ConsolePrinter printer, UserSession session, ProductService productService,
                      InventoryService inventoryService, OrderService orderService) {
         this.io = io;
         this.printer = printer;
-        this.authService = authService;
+        this.session = session;
         this.productService = productService;
         this.inventoryService = inventoryService;
         this.orderService = orderService;
     }
 
     private User admin() {
-        return authService.getCurrentUser();
+        return session.getCurrentUser();
     }
 
     public void addCategory() {
