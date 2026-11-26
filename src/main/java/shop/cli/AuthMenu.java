@@ -2,15 +2,18 @@ package shop.cli;
 
 import shop.model.User;
 import shop.service.AuthService;
+import shop.service.PasswordRecoveryService;
 
 /** Login, registration and password recovery screens. */
 public class AuthMenu {
     private final ConsoleIO io;
     private final AuthService authService;
+    private final PasswordRecoveryService recoveryService;
 
-    public AuthMenu(ConsoleIO io, AuthService authService) {
+    public AuthMenu(ConsoleIO io, AuthService authService, PasswordRecoveryService recoveryService) {
         this.io = io;
         this.authService = authService;
+        this.recoveryService = recoveryService;
     }
 
     public void login() {
@@ -33,7 +36,7 @@ public class AuthMenu {
     public void forgotPassword() {
         io.println("\n--- Password Recovery ---");
         String identifier = io.readLine("Enter your registered email or phone: ");
-        String code = authService.requestPasswordReset(identifier);
+        String code = recoveryService.requestPasswordReset(identifier);
         io.println("[SIMULATION] A recovery code was sent to you: " + code);
         String enteredCode = io.readLine("Enter the recovery code: ");
         String newPassword = io.readLine("New password: ");
@@ -41,7 +44,7 @@ public class AuthMenu {
         if (!newPassword.equals(confirmation)) {
             throw new IllegalArgumentException("Passwords do not match.");
         }
-        authService.resetPassword(identifier, enteredCode, newPassword);
+        recoveryService.resetPassword(identifier, enteredCode, newPassword);
         io.println("Password reset successfully! You can now login with your new password.");
     }
 
