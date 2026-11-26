@@ -6,9 +6,10 @@ import java.math.BigDecimal;
 import java.util.UUID;
 
 /** Fake gateway for the console demo/tests: the caller decides whether the next payment succeeds. */
-public class SimulatedPaymentGateway implements PaymentGateway {
+public class SimulatedPaymentGateway implements PaymentGateway, GatewaySimulationControl {
     private boolean approveNext = true;
 
+    @Override
     public void setApproveNext(boolean approveNext) {
         this.approveNext = approveNext;
     }

@@ -6,9 +6,9 @@ import shop.model.Payment;
 import shop.model.PaymentMethod;
 import shop.model.User;
 import shop.service.CartService;
+import shop.service.GatewaySimulationControl;
 import shop.service.OrderService;
 import shop.service.PaymentService;
-import shop.service.SimulatedPaymentGateway;
 import shop.service.UserSession;
 
 import java.util.List;
@@ -21,17 +21,17 @@ public class OrderMenu {
     private final CartService cartService;
     private final OrderService orderService;
     private final PaymentService paymentService;
-    private final SimulatedPaymentGateway gateway;
+    private final GatewaySimulationControl gatewaySimulation;
 
     public OrderMenu(ConsoleIO io, ConsolePrinter printer, UserSession session, CartService cartService,
-                     OrderService orderService, PaymentService paymentService, SimulatedPaymentGateway gateway) {
+                     OrderService orderService, PaymentService paymentService, GatewaySimulationControl gatewaySimulation) {
         this.io = io;
         this.printer = printer;
         this.session = session;
         this.cartService = cartService;
         this.orderService = orderService;
         this.paymentService = paymentService;
-        this.gateway = gateway;
+        this.gatewaySimulation = gatewaySimulation;
     }
 
     public void checkout() {
@@ -80,7 +80,7 @@ public class OrderMenu {
             io.println("2. Online gateway");
             PaymentMethod method = io.readLine("Payment method: ").equals("1")
                     ? PaymentMethod.CREDIT_CARD : PaymentMethod.ONLINE_GATEWAY;
-            gateway.setApproveNext(io.confirm("Simulate gateway success?"));
+            gatewaySimulation.setApproveNext(io.confirm("Simulate gateway success?"));
             Payment payment = paymentService.pay(user, orderId, method);
             if (payment.isSuccessful()) {
                 io.println("Payment successful! Order status is now " + order.getStatus() + ".");
