@@ -1,0 +1,64 @@
+digraph ActivityCheckoutPayment {
+  graph [rankdir=TB, fontname="DejaVu Sans", nodesep=0.45, ranksep=0.38, pad=0.3,
+         label="Activity diagram: checkout and payment of an order (OrderMenu.checkout → OrderService.placeOrder → PaymentService.pay)", labelloc=t, fontsize=12];
+  node [fontname="DejaVu Sans", fontsize=10, shape=box, style="rounded,filled", fillcolor="#FFFFFF", margin="0.15,0.06"];
+  edge [fontname="DejaVu Sans", fontsize=9, arrowhead=vee, color="#333333"];
+
+  start [shape=circle, style=filled, fillcolor=black, label="", width=0.25];
+  final [shape=doublecircle, style=filled, fillcolor=black, label="", width=0.18];
+
+  a1  [label="Customer selects\n\"Checkout / place order\""];
+  a2  [label="Show cart items and total"];
+  d1  [shape=diamond, label="", width=0.35, height=0.35];
+  e1  [label="Show \"Your cart is empty\""];
+  d2  [shape=diamond, label="", width=0.35, height=0.35];
+  e2  [label="Ask the customer to add\nan address first"];
+  a3  [label="Customer selects a delivery address"];
+  d3  [shape=diamond, label="", width=0.35, height=0.35];
+  a4  [label="Check every cart item:\nproduct is active and has enough stock"];
+  d4  [shape=diamond, label="", width=0.35, height=0.35];
+  e4  [label="Show error\n(product deactivated / not enough stock)"];
+  a5  [label="Create PENDING order\n(items = price snapshots, total computed by system)"];
+  a6  [label="Save order and clear the cart"];
+  a7  [label="Show order id and amount to pay"];
+  d5  [shape=diamond, label="", width=0.35, height=0.35];
+  e5  [label="Order stays PENDING\n(can be paid later from the menu)"];
+  m1  [shape=diamond, label="", width=0.35, height=0.35];
+  a8  [label="Customer chooses payment method\n(credit card / online gateway)"];
+  a9  [label="(demo) choose whether the\nsimulated gateway approves"];
+  a10 [label="Gateway charges the order total"];
+  a11 [label="Check verification rules in order:\napproval → paid amount → transaction ref → stock"];
+  d6  [shape=diamond, label="", width=0.35, height=0.35];
+  s1  [label="Mark payment SUCCESS\n(transaction reference saved)"];
+  s2  [label="Register payment: order becomes PAID"];
+  s3  [label="Deduct stock and record sale\n(InventoryService)"];
+  s4  [label="Show \"Payment successful\""];
+  f1  [label="Mark payment FAILED (reason saved);\nregister payment: order stays PENDING"];
+  f2  [label="Show failure reason"];
+  d7  [shape=diamond, label="", width=0.35, height=0.35];
+  mF  [shape=diamond, label="", width=0.35, height=0.35];
+
+  start -> a1 -> a2 -> d1;
+  d1 -> e1 [label="[cart is empty]"];
+  d1 -> d2 [label="[cart has items]"];
+  d2 -> e2 [label="[no address]"];
+  d2 -> a3 [label="[has addresses]"];
+  a3 -> d3;
+  d3 -> mF [label="[cancelled]"];
+  d3 -> a4 [label="[address chosen]"];
+  a4 -> d4;
+  d4 -> e4 [label="[a check fails]"];
+  d4 -> a5 [label="[all items valid]"];
+  a5 -> a6 -> a7 -> d5;
+  d5 -> e5 [label="[pay later]"];
+  d5 -> m1 [label="[pay now]"];
+  m1 -> a8 -> a9 -> a10 -> a11 -> d6;
+  d6 -> s1 [label="[all rules pass]"];
+  d6 -> f1 [label="[a rule fails]"];
+  s1 -> s2 -> s3 -> s4;
+  f1 -> f2 -> d7;
+  d7 -> m1 [label="[try again]", constraint=false];
+  d7 -> mF [label="[stop]"];
+  e1 -> mF; e2 -> mF; e4 -> mF; e5 -> mF; s4 -> mF;
+  mF -> final;
+}

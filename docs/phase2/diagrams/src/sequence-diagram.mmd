@@ -1,0 +1,48 @@
+sequenceDiagram
+    autonumber
+    actor C as Customer
+    participant OM as :OrderMenu
+    participant OS as :OrderService
+    participant GS as :SimulatedPaymentGateway
+    participant PS as :PaymentService
+    participant OR as :InMemoryOrderRepository
+    participant O as order:Order
+    participant R as rule:PaymentVerificationRule
+    participant INV as :InventoryService
+
+    C->>OM: select "Pay pending order", enter order id
+    OM->>OS: getOrderDetails(user, orderId)
+    OS-->>OM: order
+    OM->>O: isPayable()
+    O-->>OM: true
+    C->>OM: choose method, simulate success = yes
+    OM->>GS: setApproveNext(true)
+    OM->>PS: pay(user, orderId, method)
+    Note right of PS: Authorization.requireCustomer(user)
+    PS->>OR: findById(orderId)
+    OR-->>PS: order
+    PS->>O: isPayable()
+    PS->>O: getTotalAmount()
+    O-->>PS: total
+    create participant P as payment:Payment
+    PS->>P: new Payment(orderId, total, method)
+    PS->>GS: charge(orderId, amount, method)
+    GS-->>PS: GatewayResponse(approved, amount, txnRef)
+    loop for each rule (approval, amount, txn ref, stock) until one fails
+        PS->>R: check(order, response)
+        R-->>PS: Optional.empty()
+    end
+    alt all rules pass
+        PS->>P: markAsSuccess(txnRef)
+        PS->>O: registerPayment(payment)
+        Note right of O: status = PAID
+        PS->>INV: deductForPaidOrder(order, userId)
+        Note right of INV: per item: product.decreaseStock(),<br/>product.recordSale(), save
+    else a rule fails
+        PS->>P: markAsFailed(reason)
+        PS->>O: registerPayment(payment)
+        Note right of O: status stays PENDING
+    end
+    PS->>OR: save(order)
+    PS-->>OM: payment
+    OM-->>C: "Payment successful!" or failure reason

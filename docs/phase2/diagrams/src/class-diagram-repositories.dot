@@ -1,0 +1,31 @@
+digraph "Repositories" {
+  graph [rankdir=TB, fontname="DejaVu Sans", fontsize=11, nodesep=0.35, ranksep=0.55, splines=true, pad=0.3 ];
+  node  [shape=plain, fontname="DejaVu Sans", fontsize=10];
+  edge  [fontname="DejaVu Sans", fontsize=9, labeldistance=1.6, labelangle=30, color="#333333"];
+  "BaseRepository" [label=<<TABLE BORDER="0" CELLBORDER="1" CELLSPACING="0"><TR><TD BGCOLOR="#FFFFFF" CELLPADDING="4"><FONT POINT-SIZE="9">«interface»</FONT><BR/><B>BaseRepository&lt;T&gt;</B></TD></TR><TR><TD ALIGN="LEFT" BALIGN="LEFT">+ save(entity: T): T<BR ALIGN="LEFT"/>+ findById(id: String): Optional&lt;T&gt;<BR ALIGN="LEFT"/>+ findAll(): List&lt;T&gt;<BR ALIGN="LEFT"/>+ deleteById(id: String)<BR ALIGN="LEFT"/></TD></TR></TABLE>>];
+  "UserRepository" [label=<<TABLE BORDER="0" CELLBORDER="1" CELLSPACING="0"><TR><TD BGCOLOR="#FFFFFF" CELLPADDING="4"><FONT POINT-SIZE="9">«interface»</FONT><BR/><B>UserRepository</B></TD></TR><TR><TD ALIGN="LEFT" BALIGN="LEFT">+ findByEmail(email: String): Optional&lt;User&gt;<BR ALIGN="LEFT"/>+ findByPhone(phone: String): Optional&lt;User&gt;<BR ALIGN="LEFT"/>+ findByIdentifier(identifier: String): Optional&lt;User&gt;<BR ALIGN="LEFT"/></TD></TR></TABLE>>];
+  "ProductRepository" [label=<<TABLE BORDER="0" CELLBORDER="1" CELLSPACING="0"><TR><TD BGCOLOR="#FFFFFF" CELLPADDING="4"><FONT POINT-SIZE="9">«interface»</FONT><BR/><B>ProductRepository</B></TD></TR><TR><TD ALIGN="LEFT" BALIGN="LEFT">+ findByCategoryId(categoryId: String): List&lt;Product&gt;<BR ALIGN="LEFT"/></TD></TR></TABLE>>];
+  "CategoryRepository" [label=<<TABLE BORDER="0" CELLBORDER="1" CELLSPACING="0"><TR><TD BGCOLOR="#FFFFFF" CELLPADDING="4"><FONT POINT-SIZE="9">«interface»</FONT><BR/><B>CategoryRepository</B></TD></TR><TR><TD ALIGN="LEFT" BALIGN="LEFT">+ findByName(name: String): Optional&lt;Category&gt;<BR ALIGN="LEFT"/></TD></TR></TABLE>>];
+  "OrderRepository" [label=<<TABLE BORDER="0" CELLBORDER="1" CELLSPACING="0"><TR><TD BGCOLOR="#FFFFFF" CELLPADDING="4"><FONT POINT-SIZE="9">«interface»</FONT><BR/><B>OrderRepository</B></TD></TR><TR><TD ALIGN="LEFT" BALIGN="LEFT">+ findByUserId(userId: String): List&lt;Order&gt;<BR ALIGN="LEFT"/>+ findByStatus(status: OrderStatus): List&lt;Order&gt;<BR ALIGN="LEFT"/></TD></TR></TABLE>>];
+  "InMemoryUserRepository" [label=<<TABLE BORDER="0" CELLBORDER="1" CELLSPACING="0"><TR><TD BGCOLOR="#FFFFFF" CELLPADDING="4"><B>InMemoryUserRepository</B></TD></TR><TR><TD ALIGN="LEFT" BALIGN="LEFT">- users: Map&lt;String, User&gt; {readOnly}<BR ALIGN="LEFT"/></TD></TR></TABLE>>];
+  "InMemoryProductRepository" [label=<<TABLE BORDER="0" CELLBORDER="1" CELLSPACING="0"><TR><TD BGCOLOR="#FFFFFF" CELLPADDING="4"><B>InMemoryProductRepository</B></TD></TR><TR><TD ALIGN="LEFT" BALIGN="LEFT">- products: Map&lt;String, Product&gt; {readOnly}<BR ALIGN="LEFT"/></TD></TR></TABLE>>];
+  "InMemoryCategoryRepository" [label=<<TABLE BORDER="0" CELLBORDER="1" CELLSPACING="0"><TR><TD BGCOLOR="#FFFFFF" CELLPADDING="4"><B>InMemoryCategoryRepository</B></TD></TR><TR><TD ALIGN="LEFT" BALIGN="LEFT">- categories: Map&lt;String, Category&gt; {readOnly}<BR ALIGN="LEFT"/></TD></TR></TABLE>>];
+  "InMemoryOrderRepository" [label=<<TABLE BORDER="0" CELLBORDER="1" CELLSPACING="0"><TR><TD BGCOLOR="#FFFFFF" CELLPADDING="4"><B>InMemoryOrderRepository</B></TD></TR><TR><TD ALIGN="LEFT" BALIGN="LEFT">- orders: Map&lt;String, Order&gt; {readOnly}<BR ALIGN="LEFT"/></TD></TR></TABLE>>];
+  "User" [label=<<TABLE BORDER="0" CELLBORDER="1" CELLSPACING="0"><TR><TD BGCOLOR="#EEEEEE" CELLPADDING="4"><B>User</B></TD></TR></TABLE>>];
+  "Product" [label=<<TABLE BORDER="0" CELLBORDER="1" CELLSPACING="0"><TR><TD BGCOLOR="#EEEEEE" CELLPADDING="4"><B>Product</B></TD></TR></TABLE>>];
+  "Category" [label=<<TABLE BORDER="0" CELLBORDER="1" CELLSPACING="0"><TR><TD BGCOLOR="#EEEEEE" CELLPADDING="4"><B>Category</B></TD></TR></TABLE>>];
+  "Order" [label=<<TABLE BORDER="0" CELLBORDER="1" CELLSPACING="0"><TR><TD BGCOLOR="#EEEEEE" CELLPADDING="4"><B>Order</B></TD></TR></TABLE>>];
+  "BaseRepository" -> "UserRepository" [dir=back, arrowtail=onormal, style=solid, label=" «bind» T → User "];
+  "BaseRepository" -> "ProductRepository" [dir=back, arrowtail=onormal, style=solid, label=" «bind» T → Product "];
+  "BaseRepository" -> "CategoryRepository" [dir=back, arrowtail=onormal, style=solid, label=" «bind» T → Category "];
+  "BaseRepository" -> "OrderRepository" [dir=back, arrowtail=onormal, style=solid, label=" «bind» T → Order "];
+  "InMemoryUserRepository" -> "User" [arrowhead=vee, style=solid, label=" users ", headlabel="0..*"];
+  "UserRepository" -> "InMemoryUserRepository" [dir=back, arrowtail=onormal, style=dashed];
+  "InMemoryProductRepository" -> "Product" [arrowhead=vee, style=solid, label=" products ", headlabel="0..*"];
+  "ProductRepository" -> "InMemoryProductRepository" [dir=back, arrowtail=onormal, style=dashed];
+  "InMemoryCategoryRepository" -> "Category" [arrowhead=vee, style=solid, label=" categories ", headlabel="0..*"];
+  "CategoryRepository" -> "InMemoryCategoryRepository" [dir=back, arrowtail=onormal, style=dashed];
+  "InMemoryOrderRepository" -> "Order" [arrowhead=vee, style=solid, label=" orders ", headlabel="0..*"];
+  "OrderRepository" -> "InMemoryOrderRepository" [dir=back, arrowtail=onormal, style=dashed];
+  note [shape=note, fontsize=9, style=filled, fillcolor="#FFFDE7", label="Package shop.repository\lEach InMemory class implements all operations of its interface\land stores entities in a LinkedHashMap keyed by id (no database).\l"];
+}
