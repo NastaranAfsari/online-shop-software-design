@@ -1,0 +1,86 @@
+package shop;
+
+import shop.cli.AdminMenu;
+import shop.cli.AuthMenu;
+import shop.cli.CartMenu;
+import shop.cli.ConsoleApp;
+import shop.cli.ConsoleIO;
+import shop.cli.ConsolePrinter;
+import shop.cli.OrderMenu;
+import shop.cli.ProductMenu;
+import shop.cli.ProfileMenu;
+import shop.model.Category;
+import shop.model.User;
+import shop.repository.InMemoryCategoryRepository;
+import shop.repository.InMemoryOrderRepository;
+import shop.repository.InMemoryProductRepository;
+import shop.repository.InMemoryUserRepository;
+import shop.service.AuthService;
+import shop.service.CartService;
+import shop.service.InventoryService;
+import shop.service.OrderService;
+import shop.service.PasswordHasher;
+import shop.service.PaymentService;
+import shop.service.ProductService;
+import shop.service.ReviewService;
+import shop.service.SimulatedPaymentGateway;
+
+import java.math.BigDecimal;
+
+/** Composition root: creates every object, wires the dependencies and starts the CLI. */
+public class Main {
+    public static void main(String[] args) {
+        // Storage (in-memory)
+        InMemoryUserRepository userRepository = new InMemoryUserRepository();
+        InMemoryProductRepository productRepository = new InMemoryProductRepository();
+        InMemoryCategoryRepository categoryRepository = new InMemoryCategoryRepository();
+        InMemoryOrderRepository orderRepository = new InMemoryOrderRepository();
+
+        // Services
+        SimulatedPaymentGateway gateway = new SimulatedPaymentGateway();
+        AuthService authService = new AuthService(userRepository, new PasswordHasher());
+        ProductService productService = new ProductService(productRepository, categoryRepository);
+        InventoryService inventoryService = new InventoryService(productRepository);
+        CartService cartService = new CartService(productService);
+        OrderService orderService = new OrderService(orderRepository, productService, cartService);
+        PaymentService paymentService = new PaymentService(orderRepository, productService, gateway);
+        ReviewService reviewService = new ReviewService(productService, orderService);
+
+        seedData(authService, productService);
+
+        // Presentation
+        ConsoleIO io = new ConsoleIO();
+        ConsolePrinter printer = new ConsolePrinter(io);
+        ConsoleApp app = new ConsoleApp(io, authService,
+                new AuthMenu(io, authService),
+                new ProfileMenu(io, printer, authService),
+                new ProductMenu(io, printer, productService, reviewService, authService),
+                new CartMenu(io, printer, cartService, authService),
+                new OrderMenu(io, printer, authService, cartService, orderService, paymentService, gateway),
+                new AdminMenu(io, printer, authService, productService, inventoryService, orderService));
+        System.out.println("Demo accounts -> admin: admin@shop.com / admin123 | customer: ali@shop.com / 123456");
+        app.start();
+    }
+
+    /** Sample data. The first admin is created here; public registration can only create customers. */
+    private static void seedData(AuthService authService, ProductService productService) {
+        User admin = authService.registerFirstAdmin("Admin User", "admin@shop.com", "09120000000", "admin123");
+        authService.register("Ali Rezaei", "ali@shop.com", "09121111111", "123456");
+
+        Category electronics = productService.createCategory(admin, "Electronics", "Digital products");
+        Category home = productService.createCategory(admin, "Home", "Home appliances");
+
+        productService.createProduct(admin, "Laptop Pro", "16GB RAM, 512GB SSD", price("1500"), 5, "Apple", electronics);
+        productService.createProduct(admin, "Laptop Air", "8GB RAM, 256GB SSD", price("900"), 8, "Apple", electronics);
+        productService.createProduct(admin, "Gaming Laptop", "RTX 3060, 16GB RAM", price("1800"), 3, "ASUS", electronics);
+        productService.createProduct(admin, "Wireless Mouse", "Logitech Silent", price("25"), 50, "Logitech", electronics);
+        productService.createProduct(admin, "Smart Watch", "AMOLED Screen", price("200"), 20, "Samsung", electronics);
+        productService.createProduct(admin, "Coffee Maker", "Automatic 1.5L", price("150"), 10, "Philips", home);
+        productService.createProduct(admin, "Air Purifier", "HEPA Filter", price("300"), 6, "Xiaomi", home);
+        productService.createProduct(admin, "Desk Lamp", "LED Touch", price("45"), 30, "Xiaomi", home);
+    }
+
+    private static BigDecimal price(String value) {
+        return new BigDecimal(value).setScale(2);
+    }
+}

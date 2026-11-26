@@ -1,0 +1,16 @@
+# Compiled output (created by IntelliJ or run.sh)
+out/
+*.class
+
+# IntelliJ IDEA: personal, machine-specific files
+.idea/workspace.xml
+.idea/shelf/
+.idea/usage.statistics.xml
+.idea/tasks.xml
+.idea/dictionaries/
+*.iws
+
+# Operating system files
+.DS_Store
+Thumbs.db
+desktop.ini
