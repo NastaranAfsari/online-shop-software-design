@@ -6,15 +6,15 @@ import shop.model.User;
 
 /** Shopping-cart use cases (stories 15-19). The cart used is always the one of the acting user. */
 public class CartService {
-    private final ProductService productService;
+    private final ProductLookup productLookup;
 
-    public CartService(ProductService productService) {
-        this.productService = productService;
+    public CartService(ProductLookup productLookup) {
+        this.productLookup = productLookup;
     }
 
     public void addToCart(User user, String productId, int quantity) {
         Authorization.requireCustomer(user);
-        Product product = productService.getProductById(productId);
+        Product product = productLookup.getProductById(productId);
         user.getCart().addItem(product, quantity);
     }
 

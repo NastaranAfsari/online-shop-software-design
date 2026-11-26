@@ -12,14 +12,14 @@ import shop.repository.OrderRepository;
 import java.util.List;
 
 /** Order placement, order queries, cancellation and admin order management (stories 20-22, 26, 27, 36). */
-public class OrderService {
+public class OrderService implements PurchaseHistory {
     private final OrderRepository orderRepository;
-    private final ProductService productService;
+    private final ProductLookup productLookup;
     private final CartService cartService;
 
-    public OrderService(OrderRepository orderRepository, ProductService productService, CartService cartService) {
+    public OrderService(OrderRepository orderRepository, ProductLookup productLookup, CartService cartService) {
         this.orderRepository = orderRepository;
-        this.productService = productService;
+        this.productLookup = productLookup;
         this.cartService = cartService;
     }
 
@@ -108,6 +108,7 @@ public class OrderService {
     }
 
     /** True if the user has a paid (PAID/SHIPPED/DELIVERED) order containing the product (stories 30, 31). */
+    @Override
     public boolean hasUserPurchased(String userId, String productId) {
         return orderRepository.findByUserId(userId).stream()
                 .anyMatch(o -> o.getStatus().isPaidState() && o.containsProduct(productId));
@@ -117,7 +118,7 @@ public class OrderService {
         boolean wasPaid = order.cancel();
         if (wasPaid) {
             for (OrderItem item : order.getItems()) {
-                Product product = productService.getProductById(item.getProductId());
+                Product product = productLookup.getProductById(item.getProductId());
                 product.increaseStock(item.getQuantity(), "Order " + order.getId() + " canceled", actor.getId());
                 product.revertSale(item.getQuantity());
             }
