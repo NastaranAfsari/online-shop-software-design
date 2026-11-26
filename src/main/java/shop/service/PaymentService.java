@@ -17,12 +17,12 @@ import java.util.List;
  */
 public class PaymentService {
     private final OrderRepository orderRepository;
-    private final ProductService productService;
+    private final ProductLookup productLookup;
     private final PaymentGateway gateway;
 
-    public PaymentService(OrderRepository orderRepository, ProductService productService, PaymentGateway gateway) {
+    public PaymentService(OrderRepository orderRepository, ProductLookup productLookup, PaymentGateway gateway) {
         this.orderRepository = orderRepository;
-        this.productService = productService;
+        this.productLookup = productLookup;
         this.gateway = gateway;
     }
 
@@ -85,7 +85,7 @@ public class PaymentService {
             return "The gateway did not return a transaction reference.";
         }
         for (OrderItem item : order.getItems()) {
-            Product product = productService.getProductById(item.getProductId());
+            Product product = productLookup.getProductById(item.getProductId());
             if (product.getStock() < item.getQuantity()) {
                 return "Product '" + product.getTitle() + "' ran out of stock.";
             }
@@ -95,7 +95,7 @@ public class PaymentService {
 
     private void deductStock(Order order, User user) {
         for (OrderItem item : order.getItems()) {
-            Product product = productService.getProductById(item.getProductId());
+            Product product = productLookup.getProductById(item.getProductId());
             product.decreaseStock(item.getQuantity(), "Order " + order.getId() + " paid", user.getId());
             product.recordSale(item.getQuantity());
         }

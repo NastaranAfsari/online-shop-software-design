@@ -22,8 +22,9 @@ import shop.service.OrderService;
 import shop.service.PasswordHasher;
 import shop.service.PasswordRecoveryService;
 import shop.service.PaymentService;
-import shop.service.ProfileService;
+import shop.service.Pbkdf2PasswordHasher;
 import shop.service.ProductService;
+import shop.service.ProfileService;
 import shop.service.ReviewService;
 import shop.service.SimulatedPaymentGateway;
 import shop.service.UserSession;
@@ -42,7 +43,7 @@ public class Main {
         // Services
         SimulatedPaymentGateway gateway = new SimulatedPaymentGateway();
         UserSession session = new UserSession();
-        PasswordHasher passwordHasher = new PasswordHasher();
+        PasswordHasher passwordHasher = new Pbkdf2PasswordHasher();
         AuthService authService = new AuthService(userRepository, passwordHasher, session);
         PasswordRecoveryService recoveryService = new PasswordRecoveryService(userRepository, passwordHasher);
         ProfileService profileService = new ProfileService(userRepository, session);

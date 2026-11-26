@@ -14,7 +14,7 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 /** Catalog use cases: categories, browsing, search, filter/sort (customers) and management (admin). */
-public class ProductService {
+public class ProductService implements ProductLookup {
     private final ProductRepository productRepository;
     private final CategoryRepository categoryRepository;
 
@@ -63,6 +63,7 @@ public class ProductService {
     }
 
     /** Internal lookup used by other services (returns active and inactive products). */
+    @Override
     public Product getProductById(String id) {
         return productRepository.findById(id)
                 .orElseThrow(() -> new IllegalArgumentException("No product with the specified ID was found."));
