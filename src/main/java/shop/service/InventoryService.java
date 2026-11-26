@@ -1,5 +1,7 @@
 package shop.service;
 
+import shop.model.Order;
+import shop.model.OrderItem;
 import shop.model.Product;
 import shop.model.StockMovement;
 import shop.model.User;
@@ -8,8 +10,11 @@ import shop.repository.ProductRepository;
 import java.util.Comparator;
 import java.util.List;
 
-/** Admin-only stock management (stories 28 and 29). Every change is logged in the product. */
-public class InventoryService {
+/**
+ * Stock management: admin operations (stories 28 and 29) and the stock changes caused by orders.
+ * Every change is logged in the product.
+ */
+public class InventoryService implements OrderStockHandler {
     private final ProductRepository productRepository;
 
     public InventoryService(ProductRepository productRepository) {
@@ -48,6 +53,26 @@ public class InventoryService {
     public List<StockMovement> getStockHistory(User actor, String productId) {
         Authorization.requireAdmin(actor);
         return find(productId).getStockHistory();
+    }
+
+    @Override
+    public void deductForPaidOrder(Order order, String performedBy) {
+        for (OrderItem item : order.getItems()) {
+            Product product = find(item.getProductId());
+            product.decreaseStock(item.getQuantity(), "Order " + order.getId() + " paid", performedBy);
+            product.recordSale(item.getQuantity());
+            productRepository.save(product);
+        }
+    }
+
+    @Override
+    public void restockCanceledOrder(Order order, String performedBy) {
+        for (OrderItem item : order.getItems()) {
+            Product product = find(item.getProductId());
+            product.increaseStock(item.getQuantity(), "Order " + order.getId() + " canceled", performedBy);
+            product.revertSale(item.getQuantity());
+            productRepository.save(product);
+        }
     }
 
     private Product find(String productId) {

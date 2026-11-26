@@ -1,15 +1,13 @@
 package shop.service;
 
 import shop.model.Order;
-import shop.model.OrderItem;
 import shop.model.Payment;
 import shop.model.PaymentMethod;
-import shop.model.Product;
 import shop.model.User;
-import shop.model.Validators;
 import shop.repository.OrderRepository;
 
 import java.util.List;
+import java.util.Optional;
 
 /**
  * Payment and payment verification (stories 23-25).
@@ -17,13 +15,16 @@ import java.util.List;
  */
 public class PaymentService {
     private final OrderRepository orderRepository;
-    private final ProductLookup productLookup;
     private final PaymentGateway gateway;
+    private final List<PaymentVerificationRule> verificationRules;
+    private final OrderStockHandler stockHandler;
 
-    public PaymentService(OrderRepository orderRepository, ProductLookup productLookup, PaymentGateway gateway) {
+    public PaymentService(OrderRepository orderRepository, PaymentGateway gateway,
+                          List<PaymentVerificationRule> verificationRules, OrderStockHandler stockHandler) {
         this.orderRepository = orderRepository;
-        this.productLookup = productLookup;
         this.gateway = gateway;
+        this.verificationRules = List.copyOf(verificationRules);
+        this.stockHandler = stockHandler;
     }
 
     /**
@@ -57,7 +58,7 @@ public class PaymentService {
 
         order.registerPayment(payment);
         if (payment.isSuccessful()) {
-            deductStock(order, user);
+            stockHandler.deductForPaidOrder(order, user.getId());
         }
         orderRepository.save(order);
         return payment;
@@ -73,31 +74,14 @@ public class PaymentService {
         return order.getPayments();
     }
 
-    /** Returns null when the gateway result is acceptable, otherwise the reason for rejecting it. */
+    /** Runs the rules in order and returns the first rejection reason, or null if all pass. */
     private String verify(Order order, GatewayResponse response) {
-        if (response == null || !response.isApproved()) {
-            return response == null || response.getMessage() == null ? "Payment was not approved." : response.getMessage();
-        }
-        if (response.getPaidAmount() == null || response.getPaidAmount().compareTo(order.getTotalAmount()) != 0) {
-            return "The paid amount does not match the order amount.";
-        }
-        if (Validators.isBlank(response.getTransactionRef())) {
-            return "The gateway did not return a transaction reference.";
-        }
-        for (OrderItem item : order.getItems()) {
-            Product product = productLookup.getProductById(item.getProductId());
-            if (product.getStock() < item.getQuantity()) {
-                return "Product '" + product.getTitle() + "' ran out of stock.";
+        for (PaymentVerificationRule rule : verificationRules) {
+            Optional<String> failure = rule.check(order, response);
+            if (failure.isPresent()) {
+                return failure.get();
             }
         }
         return null;
-    }
-
-    private void deductStock(Order order, User user) {
-        for (OrderItem item : order.getItems()) {
-            Product product = productLookup.getProductById(item.getProductId());
-            product.decreaseStock(item.getQuantity(), "Order " + order.getId() + " paid", user.getId());
-            product.recordSale(item.getQuantity());
-        }
     }
 }
