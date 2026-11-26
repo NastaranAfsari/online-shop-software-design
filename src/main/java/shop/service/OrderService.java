@@ -3,7 +3,6 @@ package shop.service;
 import shop.model.Address;
 import shop.model.CartItem;
 import shop.model.Order;
-import shop.model.OrderItem;
 import shop.model.OrderStatus;
 import shop.model.Product;
 import shop.model.User;
@@ -14,13 +13,13 @@ import java.util.List;
 /** Order placement, order queries, cancellation and admin order management (stories 20-22, 26, 27, 36). */
 public class OrderService implements PurchaseHistory {
     private final OrderRepository orderRepository;
-    private final ProductLookup productLookup;
     private final CartService cartService;
+    private final OrderStockHandler stockHandler;
 
-    public OrderService(OrderRepository orderRepository, ProductLookup productLookup, CartService cartService) {
+    public OrderService(OrderRepository orderRepository, CartService cartService, OrderStockHandler stockHandler) {
         this.orderRepository = orderRepository;
-        this.productLookup = productLookup;
         this.cartService = cartService;
+        this.stockHandler = stockHandler;
     }
 
     /**
@@ -117,11 +116,7 @@ public class OrderService implements PurchaseHistory {
     private Order cancelAndRestock(Order order, User actor) {
         boolean wasPaid = order.cancel();
         if (wasPaid) {
-            for (OrderItem item : order.getItems()) {
-                Product product = productLookup.getProductById(item.getProductId());
-                product.increaseStock(item.getQuantity(), "Order " + order.getId() + " canceled", actor.getId());
-                product.revertSale(item.getQuantity());
-            }
+            stockHandler.restockCanceledOrder(order, actor.getId());
         }
         return orderRepository.save(order);
     }

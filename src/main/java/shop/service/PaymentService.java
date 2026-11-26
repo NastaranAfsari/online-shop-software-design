@@ -19,11 +19,14 @@ public class PaymentService {
     private final OrderRepository orderRepository;
     private final ProductLookup productLookup;
     private final PaymentGateway gateway;
+    private final OrderStockHandler stockHandler;
 
-    public PaymentService(OrderRepository orderRepository, ProductLookup productLookup, PaymentGateway gateway) {
+    public PaymentService(OrderRepository orderRepository, ProductLookup productLookup, PaymentGateway gateway,
+                          OrderStockHandler stockHandler) {
         this.orderRepository = orderRepository;
         this.productLookup = productLookup;
         this.gateway = gateway;
+        this.stockHandler = stockHandler;
     }
 
     /**
@@ -57,7 +60,7 @@ public class PaymentService {
 
         order.registerPayment(payment);
         if (payment.isSuccessful()) {
-            deductStock(order, user);
+            stockHandler.deductForPaidOrder(order, user.getId());
         }
         orderRepository.save(order);
         return payment;
@@ -91,13 +94,5 @@ public class PaymentService {
             }
         }
         return null;
-    }
-
-    private void deductStock(Order order, User user) {
-        for (OrderItem item : order.getItems()) {
-            Product product = productLookup.getProductById(item.getProductId());
-            product.decreaseStock(item.getQuantity(), "Order " + order.getId() + " paid", user.getId());
-            product.recordSale(item.getQuantity());
-        }
     }
 }

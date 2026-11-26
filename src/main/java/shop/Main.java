@@ -50,8 +50,8 @@ public class Main {
         ProductService productService = new ProductService(productRepository, categoryRepository);
         InventoryService inventoryService = new InventoryService(productRepository);
         CartService cartService = new CartService(productService);
-        OrderService orderService = new OrderService(orderRepository, productService, cartService);
-        PaymentService paymentService = new PaymentService(orderRepository, productService, gateway);
+        OrderService orderService = new OrderService(orderRepository, cartService, inventoryService);
+        PaymentService paymentService = new PaymentService(orderRepository, productService, gateway, inventoryService);
         ReviewService reviewService = new ReviewService(productService, orderService);
 
         seedData(authService, productService);
